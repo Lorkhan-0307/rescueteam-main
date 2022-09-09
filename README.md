@@ -4,7 +4,7 @@
 
 ### 🥚 기획 계기
 
-## ☕ Developers(by ㄱㄴㄷ order)
+## ☕ Developers
 
 - 이승민 ([@Lorkhan-0307](https://github.com/Lorkhan-0307))
 - 손승열 ([@ctwc55](https://github.com/ctwc55))
