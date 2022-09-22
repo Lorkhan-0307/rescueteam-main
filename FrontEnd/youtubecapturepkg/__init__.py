@@ -7,34 +7,24 @@ from PIL import Image
 from tqdm import tqdm
 import cv2, os, pathlib, glob, shutil
 
-def VideoDownload():
-    youtubelinklist = []
-
-    f = open('ava_v2.2/ava_train_v2.2.csv', 'r')
-    rdr = csv.reader(f)
-    for line in rdr:
-        if ("www.youtube.com/watch?v=" + line[0] not in youtubelinklist):
-            youtubelinklist.append("www.youtube.com/watch?v=" + line[0])
-
-    print(youtubelinklist)
-    print(len(youtubelinklist))
-    ncount = 0
-
-    for url in youtubelinklist:
-        try:
-            video = YouTube(url)
-            video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first().download()
-            os.rename(video.streams.first().default_filename, '%s.mp4'%url.index())
-            print('Download is finished.')
-            return
-        except:
-            continue
-
-    print(ncount)
 
 
-def capture_mp4():
-    folder = '.\\temp_yt_capture\\'
+def VideoDownload(url):
+    try:
+        video = YouTube(url)
+    finally:
+        print("fin")
+    video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first().download()
+    originname = video.streams.first().default_filename
+    
+    os.rename(video.streams.first().default_filename, 'yt_temp.mp4')
+    print('Download is finished.')
+    return
+
+
+
+def capture_mp4(i):
+    folder = '.\\temp_yt_%scapture\\'%i
     cap = cv2.VideoCapture('yt_temp.mp4')
     if not os.path.isdir(folder):
         os.mkdir(folder)
@@ -96,8 +86,8 @@ def img_merge(list_img, number, total_number):
 
 
 ### 사진을 10장씩 묶습니다. ###
-def divide_by_10():
-    list_jpg = glob.glob('.\\temp_yt_capture\\*.jpg')
+def divide_by_10(i):
+    list_jpg = glob.glob('.\\temp_yt_%scapture\\.jpg'%i)
     list_jpg.sort()
     cuts = len(list_jpg) // 10 + 1 if len(list_jpg) / 10 != len(list_jpg) // 10 else len(list_jpg) // 10
     print('\nMerge : ')
@@ -108,14 +98,7 @@ def divide_by_10():
 
 
 ### 임시파일을 삭제합니다. ###
-def delete_temp():
+def delete_temp(i):
     os.remove('yt_temp.mp4')
-    shutil.rmtree('.\\temp_yt_capture\\')
+    shutil.rmtree('.\\temp_yt_%scapture\\'%i)
     return
-
-
-if __name__ == '__main__':
-    VideoDownload()
-    capture_mp4()
-    divide_by_10()
-    delete_temp()
