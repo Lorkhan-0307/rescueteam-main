@@ -1,30 +1,36 @@
 import csv
 from pytube import YouTube
-import cv2
-import os
-from pytube import YouTube
 from PIL import Image
 from tqdm import tqdm
 import cv2, os, pathlib, glob, shutil
 
 
-
 def VideoDownload(url):
     try:
-        video = YouTube(url)
+        video = YouTube("https://www.youtube.com/watch?v="+url)
+        print("https://www.youtube.com/watch?v="+url)
     finally:
-        print("fin")
+        print("Fetch Complete")
+    print("Downloading")
     video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first().download()
+    video = YouTube("https://www.youtube.com/watch?v=" + url)
     originname = video.streams.first().default_filename
-    
-    os.rename(video.streams.first().default_filename, 'yt_temp.mp4')
-    print('Download is finished.')
+    originname = originname[::-1]
+
+    # .3gpp 같은 애들 있어서 .mp4로 확장자 바꿔줌미다
+    for idx, char in enumerate(originname):
+        if char == '.':
+            originname = '4pm' + originname[idx:]
+            originname = originname[::-1]
+            break
+
+    os.rename(originname, 'yt_temp.mp4')
+
     return
 
 
-
-def capture_mp4(i):
-    folder = '.\\temp_yt_%scapture\\'%i
+def capture_mp4(url,i,sMin, sMax):
+    folder = '.\\temp_yt_%scapture\\' % i
     cap = cv2.VideoCapture('yt_temp.mp4')
     if not os.path.isdir(folder):
         os.mkdir(folder)
@@ -43,11 +49,14 @@ def capture_mp4(i):
         success, image = cap.read()
         if count % (interval * fps) == 0:
             second = str(int(count / fps)).zfill(fill_zero)
-            prefix = 'temp_'
-            extension = '.jpg'
-            filename = prefix + second + extension
-            cv2.imwrite(folder + filename, image)
-        print('\b' + progress[count % 4], end='')
+            if(sMin <= second and sMax >= second):
+                prefix = url + "_"
+                extension = '.jpg'
+                filename = prefix + second + extension
+                cv2.imwrite(folder + filename, image)
+                print('\b' + progress[count % 4], end='')
+            elif(sMax<=second):
+                break
         count += 1
 
     list = []
@@ -87,18 +96,19 @@ def img_merge(list_img, number, total_number):
 
 ### 사진을 10장씩 묶습니다. ###
 def divide_by_10(i):
-    list_jpg = glob.glob('.\\temp_yt_%scapture\\.jpg'%i)
+    list_jpg = glob.glob('.\\temp_yt_%scapture\\.jpg' % i)
     list_jpg.sort()
     cuts = len(list_jpg) // 10 + 1 if len(list_jpg) / 10 != len(list_jpg) // 10 else len(list_jpg) // 10
     print('\nMerge : ')
     for i in tqdm(range(0, cuts)):
         temp_list = list_jpg[i * 10: (i + 1) * 10]
         img_merge(temp_list, i + 1, cuts)
+    print("didvide by 10 Done")
     return
 
 
 ### 임시파일을 삭제합니다. ###
 def delete_temp(i):
     os.remove('yt_temp.mp4')
-    shutil.rmtree('.\\temp_yt_%scapture\\'%i)
+    # shutil.rmtree('.\\temp_yt_%scapture\\'%i)
     return
